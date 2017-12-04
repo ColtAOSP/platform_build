@@ -205,11 +205,6 @@ KERNEL_MODULES_INSTALL := root
 KERNEL_MODULES_OUT := $(TARGET_ROOT_OUT)/lib/modules
 KERNEL_DEPMOD_STAGING_DIR := $(call intermediates-dir-for,PACKAGING,depmod_recovery)
 KERNEL_MODULE_MOUNTPOINT :=
-else ifeq ($(NEED_KERNEL_MODULE_SYSTEM),true)
-KERNEL_MODULES_INSTALL := $(TARGET_COPY_OUT_SYSTEM)
-KERNEL_MODULES_OUT := $(TARGET_OUT)/lib/modules
-KERNEL_DEPMOD_STAGING_DIR := $(call intermediates-dir-for,PACKAGING,depmod_system)
-KERNEL_MODULE_MOUNTPOINT := system
 else
 KERNEL_MODULES_INSTALL := $(TARGET_COPY_OUT_VENDOR)
 KERNEL_MODULES_OUT := $(TARGET_OUT_VENDOR)/lib/modules
@@ -295,6 +290,13 @@ ifeq ($(TARGET_KERNEL_MODULES),)
     TARGET_KERNEL_MODULES := no-external-modules
 endif
 
+$(KERNEL_OUT_STAMP):
+	$(hide) mkdir -p $(KERNEL_OUT)
+	$(hide) rm -rf $(KERNEL_MODULES_OUT)
+	$(hide) mkdir -p $(KERNEL_MODULES_OUT)
+	$(hide) rm -rf $(KERNEL_DEPMOD_STAGING_DIR)
+	$(hide) touch $@
+
 KERNEL_ADDITIONAL_CONFIG_OUT := $(KERNEL_OUT)/.additional_config
 
 .PHONY: force_additional_config
@@ -345,7 +347,7 @@ INSTALLED_KERNEL_MODULES: depmod-host
 			done && \
 			rm -rf $$mpath && \
 			mkdir -p $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules && \
-			find $(KERNEL_MODULES_OUT) -name *.ko -exec cp {} $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules \; && \
+			cp $(KERNEL_MODULES_OUT)/*.ko $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules && \
 			$(DEPMOD) -b $(KERNEL_DEPMOD_STAGING_DIR) 0.0 && \
 			sed -e 's/\(.*modules.*\):/\/\1:/g' -e 's/ \([^ ]*modules[^ ]*\)/ \/\1/g' $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/modules.dep > $(KERNEL_MODULES_OUT)/modules.dep; \
 		fi
