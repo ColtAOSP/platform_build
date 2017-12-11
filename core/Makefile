@@ -1,5 +1,10 @@
 # Put some miscellaneous rules here
 
+# Build system colors
+ifneq ($(BUILD_WITH_COLORS),0)
+    include $(TOP_DIR)build/core/colors.mk
+endif
+
 # HACK: clear LOCAL_PATH from including last build target before calling
 # intermedites-dir-for
 LOCAL_PATH := $(BUILD_SYSTEM)
@@ -2719,13 +2724,30 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
 
 export COLT_TARGET_PACKAGE := $(PRODUCT_OUT)/$(COLT_TARGET_ZIP).zip
+COLT_TARGET_PACKAGE_FOLDER := $(PRODUCT_OUT)
 
 .PHONY: otapackage bacon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
 bacon: otapackage
 	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(COLT_TARGET_PACKAGE)
 	$(hide) $(MD5SUM) $(COLT_TARGET_PACKAGE) | sed "s|$(PRODUCT_OUT)/||" > $(COLT_TARGET_PACKAGE).md5sum
-	@echo "Package Complete: $(COLT_TARGET_PACKAGE)" >&2
+	@echo -e ""
+	@echo -e ${CL_CYN}"========================================================================================="${CL_RST}
+	@echo -e ""
+	@echo -e ${CL_LBL}" ██████╗"${CL_LGR}" ██████╗ ██╗  ████████╗"${CL_LYL}" ██████╗ "${CL_LMG}"███████╗        "${CL_RST}
+	@echo -e ${CL_LBL}"██╔════╝"${CL_LGR}"██╔═══██╗██║  ╚══██╔══╝"${CL_LYL}"██╔═══██╗"${CL_LMG}"██╔════╝	    "${CL_RST}
+	@echo -e ${CL_LBL}"██║     "${CL_LGR}"██║   ██║██║     ██║   "${CL_LYL}"██║   ██║"${CL_LMG}"███████╗        "${CL_RST}
+	@echo -e ${CL_LBL}"██║     "${CL_LGR}"██║   ██║██║     ██║   "${CL_LYL}"██║   ██║"${CL_LMG}"╚════██║        "${CL_RST}
+	@echo -e ${CL_LBL}"╚██████╗"${CL_LGR}"╚██████╔╝███████╗██║   "${CL_LYL}"╚██████╔╝"${CL_LMG}"███████║        "${CL_RST}
+	@echo -e ${CL_LBL}" ╚═════╝"${CL_LGR}" ╚═════╝ ╚══════╝╚═╝   "${CL_LYL}" ╚═════╝ "${CL_LMG}"╚══════╝        "${CL_RST}
+	@echo -e ""
+	@echo -e ${CL_CYN}"=============================-Congrats You have built ColtOS-============================"${CL_RST}
+	@echo -e ${CL_CYN}"Folder : "${CL_MAG} $(COLT_TARGET_PACKAGE_FOLDER)${CL_RST}
+	@echo -e ${CL_CYN}"ZipName: "${CL_MAG} $(COLT_TARGET_ZIP)${CL_RST}
+	@echo -e ${CL_CYN}"MD5    : "${CL_MAG}" $(shell cat $(COLT_TARGET_PACKAGE).md5sum | awk '{print $$1}')"${CL_RST}
+	@echo -e ${CL_CYN}"Size   : "${CL_MAG}" $(shell du -hs $(COLT_TARGET_PACKAGE) | awk '{print $$1}')"${CL_RST}
+	@echo -e ${CL_CYN}"==========================================================================="${CL_RST}
+	@echo -e ""
 
 endif    # build_ota_package
 
