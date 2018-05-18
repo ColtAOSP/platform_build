@@ -464,6 +464,44 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
 
     # Stage 3/3: Make changes.
     script.Comment("Stage 3/3")
+  #Print ASCII
+  script.Print(" ")
+  script.Print("********************************************");
+  script.Print("*        || THANK YOU FOR FLASHING ||      *");
+  script.Print("********************************************");
+  script.Print("*  ________________________________________*");
+  script.Print("*  __  ____/_  __ \__  /_  /__  __ \_  ___/*");
+  script.Print("*  _  /    _  / / /_  /_  __/  / / /____ \ *");
+  script.Print("*  / /___  / /_/ /_  / / /_ / /_/ /____/ / *");
+  script.Print("*  \____/  \____/ /_/  \__/ \____/ /____/  *");
+  script.Print("********************************************");
+  script.Print("********************************************");
+  script.Print("*      By:-RakeshBatra aka (TeamColt)      *");
+  script.Print("********************************************");
+  script.Print(" ")
+
+  if GetBuildProp("ro.mod.version", OPTIONS.info_dict) is not None:
+    buildid = GetBuildProp("ro.mod.version", OPTIONS.info_dict)
+    androidver = GetBuildProp("ro.build.version.release", OPTIONS.info_dict)
+    buildtype = GetBuildProp("ro.build.type", OPTIONS.info_dict)
+    buildidn = GetBuildProp("ro.build.id", OPTIONS.info_dict)
+    buildday = GetBuildProp("ro.build.date", OPTIONS.info_dict)
+    securep = GetBuildProp("ro.build.version.security_patch", OPTIONS.info_dict)
+    device = GetBuildProp("ro.product.name", OPTIONS.info_dict)
+    script.Print(" =============================================");
+    script.Print(" ROM version    : %s"%(buildid));
+    script.Print("");
+    script.Print(" Android version  : %s"%(androidver));
+    script.Print("");
+    script.Print(" Security patch : %s"%(securep));
+    script.Print("");
+    script.Print(" Build date     : %s"%(buildday));
+    script.Print("");
+    script.Print(" Build type     : %s"%(buildtype));
+    script.Print("");
+    script.Print(" =============================================");
+    script.Print(" Device         : %s"%(device));
+    script.Print(" =============================================");
 
   # Dump fingerprints
   script.Print("Target: %s" % target_fp)
