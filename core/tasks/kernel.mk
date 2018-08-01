@@ -1,4 +1,5 @@
 # Copyright (C) 2012 The CyanogenMod Project
+#           (C) 2017 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,8 +110,7 @@ endif
 ifneq ($(TARGET_KERNEL_APPEND_DTB),)
 $(error TARGET_KERNEL_APPEND_DTB is deprecated.)
 endif
-
-TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(KERNEL_ARCH)/boot/$(TARGET_PREBUILT_INT_KERNEL_TYPE)
+TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/$(KERNEL_ARCH)/boot/$(BOARD_KERNEL_IMAGE_NAME)
 
 # Clear this first to prevent accidental poisoning from env
 MAKE_FLAGS :=
@@ -164,7 +164,6 @@ ifeq "$(wildcard $(KERNEL_SRC) )" ""
         $(warning * THIS IS DEPRECATED, AND WILL BE DISCONTINUED                *)
         $(warning * Please configure your device to download the kernel         *)
         $(warning * source repository to $(KERNEL_SRC))
-        $(warning * See http://wiki.cyanogenmod.org/w/Doc:_integrated_kernel_building)
         $(warning * for more information                                        *)
         $(warning ***************************************************************)
         FULL_KERNEL_BUILD := false
@@ -260,9 +259,14 @@ ifeq ($(TARGET_KERNEL_CLANG_COMPILE),true)
 endif
 
 ifneq ($(USE_CCACHE),)
-    ccache := $(ANDROID_BUILD_TOP)/prebuilts/misc/$(HOST_PREBUILT_TAG)/ccache/ccache
-    # Check that the executable is here.
-    ccache := $(strip $(wildcard $(ccache)))
+    # Detect if the system already has ccache installed to use instead of the prebuilt
+    ccache := $(shell which ccache)
+
+    ifeq ($(ccache),)
+        ccache := $(ANDROID_BUILD_TOP)/prebuilts/misc/$(HOST_PREBUILT_TAG)/ccache/ccache
+        # Check that the executable is here.
+        ccache := $(strip $(wildcard $(ccache)))
+    endif
 endif
 
 ifeq ($(TARGET_KERNEL_CLANG_COMPILE),true)
@@ -275,37 +279,14 @@ else
 endif
 ccache =
 
-define mv-modules
-    mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
-    if [ "$$mdpath" != "" ];then\
-        mpath=`dirname $$mdpath`;\
-        ko=`find $$mpath/kernel -type f -name *.ko`;\
-        for i in $$ko; do $(KERNEL_TOOLCHAIN_PATH)strip --strip-unneeded $$i;\
-        mv $$i $(KERNEL_MODULES_OUT)/; done;\
-    fi
-endef
-
-define clean-module-folder
-    mdpath=`find $(KERNEL_MODULES_OUT) -type f -name modules.order`;\
-    if [ "$$mdpath" != "" ];then\
-        mpath=`dirname $$mdpath`; rm -rf $$mpath;\
-    fi
-endef
-
 ifeq ($(HOST_OS),darwin)
-  MAKE_FLAGS += C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/libelf/
+  MAKE_FLAGS += C_INCLUDE_PATH=$(ANDROID_BUILD_TOP)/external/elfutils/libelf:/usr/local/opt/openssl/include
+  MAKE_FLAGS += LIBRARY_PATH=/usr/local/opt/openssl/lib
 endif
 
 ifeq ($(TARGET_KERNEL_MODULES),)
-    TARGET_KERNEL_MODULES := no-external-modules
+    TARGET_KERNEL_MODULES := INSTALLED_KERNEL_MODULES
 endif
-
-$(KERNEL_OUT_STAMP):
-	$(hide) mkdir -p $(KERNEL_OUT)
-	$(hide) rm -rf $(KERNEL_MODULES_OUT)
-	$(hide) mkdir -p $(KERNEL_MODULES_OUT)
-	$(hide) rm -rf $(KERNEL_DEPMOD_STAGING_DIR)
-	$(hide) touch $@
 
 KERNEL_ADDITIONAL_CONFIG_OUT := $(KERNEL_OUT)/.additional_config
 
@@ -357,7 +338,7 @@ INSTALLED_KERNEL_MODULES: depmod-host
 			done && \
 			rm -rf $$mpath && \
 			mkdir -p $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules && \
-			cp $(KERNEL_MODULES_OUT)/*.ko $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules && \
+			find $(KERNEL_MODULES_OUT) -name *.ko -exec cp {} $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/$(KERNEL_MODULE_MOUNTPOINT)/lib/modules \; && \
 			$(DEPMOD) -b $(KERNEL_DEPMOD_STAGING_DIR) 0.0 && \
 			sed -e 's/\(.*modules.*\):/\/\1:/g' -e 's/ \([^ ]*modules[^ ]*\)/ \/\1/g' $(KERNEL_DEPMOD_STAGING_DIR)/lib/modules/0.0/modules.dep > $(KERNEL_MODULES_OUT)/modules.dep; \
 		fi
